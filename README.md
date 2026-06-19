@@ -2,6 +2,16 @@
 
 A simulation of a single-threaded server handling ~10,000 concurrent connections.
 
+## Video Demonstration
+
+<!-- Video Placeholder -->
+Place your demo video link below:
+```markdown
+![C10K Simulation Video](/path/to/video.mp4)
+```
+
+---
+
 ## Purpose
 
 This project demonstrates how Node.js utilizes a single-threaded event loop (via libuv) to manage ~10,000 concurrent network connections. It serves as a visual contrast to traditional multi-threaded servers (thread-per-connection), which incur significant memory and context-switching overhead at scale.
@@ -64,16 +74,6 @@ Ensure you raise your shell file limit first:
 ulimit -n 15000
 cd backend
 npm run loadtest -- --connections 10500
-```
-
-## Video Demonstration
-
-<!-- Video Placeholder -->
-
-Place your demo video link below:
-
-```markdown
-![C10K Simulation Video](/path/to/video.mp4)
 ```
 
 ## Test Stats
