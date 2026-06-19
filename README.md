@@ -3,12 +3,7 @@
 A simulation of a single-threaded server handling ~10,000 concurrent connections.
 
 ## Video Demonstration
-
-<!-- Video Placeholder -->
-Place your demo video link below:
-```markdown
-![C10K Simulation Video](/path/to/video.mp4)
-```
+https://github.com/user-attachments/assets/bde8590d-c31e-45e2-bfb8-552a476f96e0
 
 ---
 
