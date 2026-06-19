@@ -1,0 +1,16 @@
+{
+  "name": "c10k-backend",
+  "version": "1.0.0",
+  "description": "C10K Architecture Demonstration - Event Loop Engine",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc --noEmit",
+    "start": "tsx src/server.ts",
+    "loadtest": "tsx src/load-tester.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "tsx": "^4.19.0",
+    "typescript": "^5.4.0"
+  }
+}
