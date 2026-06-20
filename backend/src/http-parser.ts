@@ -7,7 +7,15 @@
  * without pulling in the full Node.js `http` module.
  */
 
-const HTTP_METHODS = ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'] as const;
+const HTTP_METHODS = [
+  'GET',
+  'POST',
+  'HEAD',
+  'PUT',
+  'DELETE',
+  'OPTIONS',
+  'PATCH',
+] as const;
 
 /**
  * Checks whether the leading bytes of a buffer look like a valid HTTP request.
@@ -32,7 +40,8 @@ export function parseHttpRequest(buffer: Buffer): {
 } {
   const raw = buffer.toString('utf-8');
   const lines = raw.split('\r\n');
-  const [method = '', path = ''] = (lines[0] ?? '').split(' ');
+  const [method = '', fullPath = ''] = (lines[0] ?? '').split(' ');
+  const [path = ''] = fullPath.split('?');
 
   const headers: Record<string, string> = {};
   for (let i = 1; i < lines.length; i++) {

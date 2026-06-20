@@ -119,7 +119,7 @@ function handleHttpRequest(socket: net.Socket, data: Buffer): void {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Content-Length': Buffer.byteLength(body).toString(),
-        'Connection': 'close',
+        Connection: 'close',
       },
       body,
     );
@@ -154,7 +154,7 @@ function handleHttpRequest(socket: net.Socket, data: Buffer): void {
               'Content-Type': 'text/html',
               'Access-Control-Allow-Origin': '*',
               'Content-Length': indexData.length.toString(),
-              'Connection': 'close',
+              Connection: 'close',
             },
             indexData.toString('utf-8'),
           );
@@ -174,7 +174,7 @@ function handleHttpRequest(socket: net.Socket, data: Buffer): void {
         'Content-Type': mime,
         'Access-Control-Allow-Origin': '*',
         'Content-Length': fileData.length.toString(),
-        'Connection': 'close',
+        Connection: 'close',
       },
       fileData.toString('utf-8'),
     );
@@ -184,14 +184,15 @@ function handleHttpRequest(socket: net.Socket, data: Buffer): void {
 }
 
 function send404(socket: net.Socket): void {
-  const body = '<!DOCTYPE html><html><body><h1>404 Not Found</h1></body></html>';
+  const body =
+    '<!DOCTYPE html><html><body><h1>404 Not Found</h1></body></html>';
   const response = buildHttpResponse(
     404,
     {
       'Content-Type': 'text/html',
       'Access-Control-Allow-Origin': '*',
       'Content-Length': Buffer.byteLength(body).toString(),
-      'Connection': 'close',
+      Connection: 'close',
     },
     body,
   );
@@ -218,7 +219,7 @@ function buildSnapshot(): {
     memoryMB: Math.round((memUsage.rss / 1024 / 1024) * 10) / 10,
     recentActiveIds: Array.from(recentActivity),
     totalEverConnected,
-    uptime: Math.round((Date.now() - startTime) / 1000 * 10) / 10,
+    uptime: Math.round(((Date.now() - startTime) / 1000) * 10) / 10,
     peakConnections,
     requestsPerSecond,
   };
@@ -238,22 +239,30 @@ const server = net.createServer((socket: net.Socket) => {
 
   let isIdentified = false;
   let isHttp = false;
+  let clientBuffer = Buffer.alloc(0);
 
   socket.on('data', (data: Buffer) => {
     totalRequests++;
 
     if (!isIdentified) {
-      if (isHttpRequest(data)) {
+      clientBuffer = Buffer.concat([clientBuffer, data]);
+      if (isHttpRequest(clientBuffer)) {
         isHttp = true;
+        isIdentified = true;
+      } else if (clientBuffer.length >= 5) {
+        isIdentified = true;
       }
-      isIdentified = true;
     }
 
-    if (isHttp) {
-      handleHttpRequest(socket, data);
-    } else {
-      // Raw TCP connection — register as recent activity
-      recentActivity.add(socketId);
+    if (isIdentified) {
+      if (isHttp) {
+        const reqData = clientBuffer.length > 0 ? clientBuffer : data;
+        handleHttpRequest(socket, reqData);
+        clientBuffer = Buffer.alloc(0);
+      } else {
+        // Raw TCP connection — register as recent activity
+        recentActivity.add(socketId);
+      }
     }
   });
 
@@ -262,7 +271,12 @@ const server = net.createServer((socket: net.Socket) => {
     sseClients.delete(socket);
   });
 
+  socket.on('end', () => {
+    socket.end();
+  });
+
   socket.on('error', (err: NodeJS.ErrnoException) => {
+    socket.destroy();
     // Suppress expected connection-level errors
     if (err.code === 'ECONNRESET' || err.code === 'EPIPE') return;
     // Log unexpected errors for debugging
@@ -286,6 +300,9 @@ setInterval(() => {
         sseClients.delete(client);
       }
     } catch {
+      try {
+        client.destroy();
+      } catch {}
       sseClients.delete(client);
     }
   }
@@ -299,10 +316,10 @@ setInterval(() => {
   const mem = process.memoryUsage();
   console.log(
     `[stats] connections=${activeSockets.size} peak=${peakConnections} ` +
-    `requests=${totalRequests} sseClients=${sseClients.size} ` +
-    `heap=${(mem.heapUsed / 1024 / 1024).toFixed(1)}MB ` +
-    `rss=${(mem.rss / 1024 / 1024).toFixed(1)}MB ` +
-    `platform=${os.platform()} cpus=${os.cpus().length}`,
+      `requests=${totalRequests} sseClients=${sseClients.size} ` +
+      `heap=${(mem.heapUsed / 1024 / 1024).toFixed(1)}MB ` +
+      `rss=${(mem.rss / 1024 / 1024).toFixed(1)}MB ` +
+      `platform=${os.platform()} cpus=${os.cpus().length}`,
   );
 }, 5000);
 
@@ -312,7 +329,9 @@ server.listen(PORT, () => {
   console.log(`C10K Server listening on port ${PORT}`);
   console.log(`Frontend path: ${FRONTEND_DIST_PATH}`);
   console.log(`SSE interval: ${SSE_INTERVAL}ms`);
-  console.log(`Platform: ${os.platform()} | CPUs: ${os.cpus().length} | Memory: ${(os.totalmem() / 1024 / 1024 / 1024).toFixed(1)}GB`);
+  console.log(
+    `Platform: ${os.platform()} | CPUs: ${os.cpus().length} | Memory: ${(os.totalmem() / 1024 / 1024 / 1024).toFixed(1)}GB`,
+  );
 });
 
 // Graceful shutdown
