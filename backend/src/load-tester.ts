@@ -62,7 +62,10 @@ function delay(ms: number): Promise<void> {
 
 function createBatch(batchNum: number, totalBatches: number): void {
   for (let i = 0; i < config.batchSize; i++) {
-    const socket = net.createConnection({ host: config.target, port: config.port });
+    const socket = net.createConnection({
+      host: config.target,
+      port: config.port,
+    });
 
     socket.setNoDelay(true);
 
@@ -88,7 +91,7 @@ function createBatch(batchNum: number, totalBatches: number): void {
 
   console.log(
     `[batch ${batchNum}/${totalBatches}] Establishing ${config.batchSize} connections... ` +
-    `(${connected} active, ${failed} failed)`,
+      `(${connected} active, ${failed} failed)`,
   );
 }
 
@@ -114,7 +117,7 @@ function startHeartbeat(): void {
     const elapsed = ((now - testStartTime) / 1000).toFixed(1);
     console.log(
       `[heartbeat] active=${connected} peak=${peakConcurrent} ` +
-      `failed=${failed} writeErrors=${writeErrors} elapsed=${elapsed}s`,
+        `failed=${failed} writeErrors=${writeErrors} elapsed=${elapsed}s`,
     );
   }, 3000);
 
@@ -148,7 +151,7 @@ function startHeartbeat(): void {
 
 async function startLoadTest(): Promise<void> {
   console.log('╔══════════════════════════════════════════════╗');
-  console.log('║      C10K LOAD TESTER — BOT ARMY SIMULATOR  ║');
+  console.log('║      C10K LOAD TESTER — BOT ARMY SIMULATOR   ║');
   console.log('╚══════════════════════════════════════════════╝');
   console.log();
   console.log(`  Target:       ${config.target}:${config.port}`);
@@ -171,7 +174,9 @@ async function startLoadTest(): Promise<void> {
   console.log();
   console.log('═'.repeat(48));
   console.log(`  All batches dispatched in ${elapsed}s`);
-  console.log(`  Connected: ${connected} | Failed: ${failed} | Peak: ${peakConcurrent}`);
+  console.log(
+    `  Connected: ${connected} | Failed: ${failed} | Peak: ${peakConcurrent}`,
+  );
   console.log('═'.repeat(48));
   console.log();
   console.log('Starting heartbeat (PING every 3s)...');
