@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { Cpu, Activity, MemoryStick, TrendingUp } from 'lucide-react'
 import type { MetricsSnapshot, MetricsHistory } from '../App'
 
@@ -10,6 +10,23 @@ interface MetricsGridProps {
 // Lightweight canvas sparkline — no external deps
 function Sparkline({ data, color, height = 32 }: { data: number[]; color: string; height?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [dimensions, setDimensions] = useState({ w: 0, h: 0 })
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const handleResize = () => {
+      setDimensions({
+        w: canvas.clientWidth,
+        h: canvas.clientHeight,
+      })
+    }
+
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -19,8 +36,11 @@ function Sparkline({ data, color, height = 32 }: { data: number[]; color: string
     if (!ctx) return
 
     const dpr = window.devicePixelRatio || 1
-    const w = canvas.clientWidth
-    const h = canvas.clientHeight
+    const w = dimensions.w || canvas.clientWidth
+    const h = dimensions.h || canvas.clientHeight
+
+    if (w === 0 || h === 0) return
+
     canvas.width = w * dpr
     canvas.height = h * dpr
     ctx.scale(dpr, dpr)
@@ -58,7 +78,7 @@ function Sparkline({ data, color, height = 32 }: { data: number[]; color: string
     ctx.strokeStyle = color
     ctx.lineWidth = 1.5
     ctx.stroke()
-  }, [data, color, height])
+  }, [data, color, height, dimensions])
 
   return (
     <div className="mt-2 mb-2 w-full">

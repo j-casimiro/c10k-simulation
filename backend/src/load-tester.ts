@@ -187,12 +187,12 @@ async function startLoadTest(): Promise<void> {
 
 // ─── Graceful Shutdown ───────────────────────────────────────────────────────
 
-process.on('SIGINT', () => {
+function handleShutdown(signal: string) {
   const duration = ((Date.now() - testStartTime) / 1000).toFixed(1);
 
   console.log('\n');
   console.log('╔══════════════════════════════════════════════╗');
-  console.log('║          LOAD TEST SUMMARY                   ║');
+  console.log(`║          LOAD TEST SUMMARY (${signal})`.padEnd(47) + '║');
   console.log('╠══════════════════════════════════════════════╣');
   console.log(`║  Peak Concurrent: ${String(peakConcurrent).padEnd(26)}║`);
   console.log(`║  Total Connected: ${String(connected).padEnd(26)}║`);
@@ -210,7 +210,10 @@ process.on('SIGINT', () => {
   }
 
   process.exit(0);
-});
+}
+
+process.on('SIGINT', () => handleShutdown('SIGINT'));
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));
 
 // ─── Entry Point ─────────────────────────────────────────────────────────────
 

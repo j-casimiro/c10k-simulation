@@ -53,7 +53,7 @@ const startTime = Date.now();
 let prevRequestCount = 0;
 let requestsPerSecond = 0;
 
-setInterval(() => {
+const rpsInterval = setInterval(() => {
   requestsPerSecond = totalRequests - prevRequestCount;
   prevRequestCount = totalRequests;
 }, 1000);
@@ -286,7 +286,7 @@ const server = net.createServer((socket: net.Socket) => {
 
 // ─── SSE Aggregation Loop ────────────────────────────────────────────────────
 
-setInterval(() => {
+const sseInterval = setInterval(() => {
   if (sseClients.size === 0) return;
 
   const snapshot = buildSnapshot();
@@ -312,7 +312,7 @@ setInterval(() => {
 
 // ─── Periodic Stats Logging ──────────────────────────────────────────────────
 
-setInterval(() => {
+const statsInterval = setInterval(() => {
   const mem = process.memoryUsage();
   console.log(
     `[stats] connections=${activeSockets.size} peak=${peakConnections} ` +
@@ -335,11 +335,19 @@ server.listen(PORT, () => {
 });
 
 // Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('\n[shutdown] Closing server...');
+function handleShutdown(signal: string) {
+  console.log(`\n[shutdown] Received ${signal}. Closing server...`);
+  
+  clearInterval(rpsInterval);
+  clearInterval(sseInterval);
+  clearInterval(statsInterval);
+
   server.close();
   for (const [, entry] of activeSockets) {
     entry.socket.destroy();
   }
   process.exit(0);
-});
+}
+
+process.on('SIGINT', () => handleShutdown('SIGINT'));
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));
