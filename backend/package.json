@@ -4,9 +4,9 @@
   "description": "C10K Architecture Demonstration - Event Loop Engine",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc --noEmit",
-    "start": "tsx src/server.ts",
-    "loadtest": "tsx src/load-tester.ts"
+    "build": "tsc",
+    "start": "node --expose-gc --max-old-space-size=64 dist/server.js",
+    "loadtest": "node dist/load-tester.js"
   },
   "devDependencies": {
     "@types/node": "^20.19.43",

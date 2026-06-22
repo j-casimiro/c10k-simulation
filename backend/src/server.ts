@@ -262,6 +262,9 @@ const server = net.createServer((socket: net.Socket) => {
       } else {
         // Raw TCP connection — register as recent activity
         recentActivity.add(socketId);
+        if (clientBuffer.length > 0) {
+          clientBuffer = Buffer.alloc(0);
+        }
       }
     }
   });
@@ -287,23 +290,23 @@ const server = net.createServer((socket: net.Socket) => {
 // ─── SSE Aggregation Loop ────────────────────────────────────────────────────
 
 const sseInterval = setInterval(() => {
-  if (sseClients.size === 0) return;
+  if (sseClients.size > 0) {
+    const snapshot = buildSnapshot();
+    const payload = `data: ${JSON.stringify(snapshot)}\n\n`;
 
-  const snapshot = buildSnapshot();
-  const payload = `data: ${JSON.stringify(snapshot)}\n\n`;
-
-  for (const client of sseClients) {
-    try {
-      if (!client.destroyed) {
-        client.write(payload);
-      } else {
+    for (const client of sseClients) {
+      try {
+        if (!client.destroyed) {
+          client.write(payload);
+        } else {
+          sseClients.delete(client);
+        }
+      } catch {
+        try {
+          client.destroy();
+        } catch {}
         sseClients.delete(client);
       }
-    } catch {
-      try {
-        client.destroy();
-      } catch {}
-      sseClients.delete(client);
     }
   }
 
@@ -313,6 +316,9 @@ const sseInterval = setInterval(() => {
 // ─── Periodic Stats Logging ──────────────────────────────────────────────────
 
 const statsInterval = setInterval(() => {
+  if (typeof global !== 'undefined' && (global as any).gc) {
+    (global as any).gc();
+  }
   const mem = process.memoryUsage();
   console.log(
     `[stats] connections=${activeSockets.size} peak=${peakConnections} ` +
