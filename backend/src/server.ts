@@ -130,7 +130,7 @@ function handleHttpRequest(socket: net.Socket, data: Buffer): void {
 
   // ── Static file serving ──
   const safePath = reqPath === '/' ? '/index.html' : reqPath;
-  const filePath = path.join(FRONTEND_DIST_PATH, safePath);
+  const filePath = path.resolve(FRONTEND_DIST_PATH, safePath.replace(/^\//, ''));
 
   // Prevent directory traversal
   if (!filePath.startsWith(FRONTEND_DIST_PATH)) {
